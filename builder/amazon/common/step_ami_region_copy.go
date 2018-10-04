@@ -27,6 +27,13 @@ func (s *StepAMIRegionCopy) Run(ctx context.Context, state multistep.StateBag) m
 	snapshots := state.Get("snapshots").(map[string][]string)
 	ami := amis[*ec2conn.Config.Region]
 
+	if s.EncryptBootVolume != nil {
+		// encrypt_boot was set, we now have to copy the temporary
+		// AMI with required encryption setting.
+		// temp image was created by stepCreateAMI.
+		s.Regions = append(s.Regions, *ec2conn.Config.Region)
+	}
+
 	if len(s.Regions) == 0 {
 		return multistep.ActionContinue
 	}
@@ -40,7 +47,7 @@ func (s *StepAMIRegionCopy) Run(ctx context.Context, state multistep.StateBag) m
 
 	wg.Add(len(s.Regions))
 	for _, region := range s.Regions {
-		if region == *ec2conn.Config.Region {
+		if region == *ec2conn.Config.Region && s.EncryptBootVolume == nil {
 			ui.Message(fmt.Sprintf(
 				"Avoiding copying AMI to duplicate region %s", region))
 			continue
