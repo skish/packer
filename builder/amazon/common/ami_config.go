@@ -112,8 +112,8 @@ func (c *AMIConfig) prepareRegions(ec2conn ec2iface.EC2API, accessConfig *Access
 
 			if !c.AMISkipRegionValidation {
 				// Verify the region is real
-				if valid := ValidateRegion(region, ec2conn); !valid {
-					errs = append(errs, fmt.Errorf("Unknown region: %s", region))
+				if err := ValidateRegion(region, ec2conn); err != nil {
+					errs = append(errs, err)
 				}
 			}
 
